@@ -1,7 +1,9 @@
 **GameDVR2Local**
+
 Saves all GameDVR and Upload Studio clips to your computer
 
 **Requirements**
+
 Two requirements right now:
 
   You'll need a free account at https://xboxapi.com in order to use this script
