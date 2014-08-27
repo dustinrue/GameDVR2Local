@@ -9,8 +9,10 @@ Two requirements right now:
 
 **Running**
 
+```
 Usage: ./get_game_clips.php <options>
 
   -x       Your XboxAPI API Key
   -u       Your Xbox Profile User ID
   -d       File save location
+```
