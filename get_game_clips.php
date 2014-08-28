@@ -1,8 +1,5 @@
 #!/usr/bin/php
 <?php
-
-  
-  
   $shortopts = "";
   $shortopts .= "x:";
   $shortopts .= "u:";
@@ -29,28 +26,42 @@
   curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-AUTH: " . $xauth));
   curl_setopt($ch, CURLOPT_HEADER, 0);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  $stuff = curl_exec($ch);
+  $gameclip_metadata = curl_exec($ch);
   curl_close($ch);
 
-  $content = json_decode($stuff);
+  $gameclip_metadata_decoded = json_decode($gameclip_metadata);
 
-  foreach($content AS $clip) {
-    foreach ($clip->gameClipUris AS $gameClipUri) {
+  foreach($gameclip_metadata_decoded AS $game_clip) {
+    foreach ($game_clip->gameClipUris AS $gameClipUri) {
       if ($gameClipUri->uriType == "Download") {
-        @mkdir($output . "/" . $clip->titleName,0750,true);
         
-        if ($clip->userCaption != "") {
-          $filename = $output . "/" . $clip->titleName . "/[" . $clip->lastModified . "] " . $clip->userCaption . ".mp4";
+        // creates the destination directory while ignoring any errors 
+        // (maybe the destination already exists)
+        @mkdir($output . "/" . $game_clip->titleName,0755,true);
+        
+        if (!file_exists($output . "/" . $game_clip->titleName)) {
+          echo "Failed to create destination directory: " . $output . "/" . $game_clip->titleName . "\n";
+          exit;
+        }
+        
+        // generate a clip name that includes the last modified date and, if set, the user caption
+        // (the title given when using Upload Studio) or simply the game clip id if it's directly
+        // from the game
+        if ($game_clip->userCaption != "") {
+          $filename = $output . "/" . $game_clip->titleName . "/[" . $game_clip->lastModified . "] " . $game_clip->userCaption . ".mp4";
         }
         else {
-          $filename = $output . "/" . $clip->titleName . "/[" . $clip->lastModified . "] " . $clip->gameClipId  . ".mp4";
+          $filename = $output . "/" . $game_clip->titleName . "/[" . $game_clip->lastModified . "] " . $game_clip->gameClipId  . ".mp4";
         }
         
+        // if the destination file already exists just skip it
         if (!file_exists($filename)) {
+          echo sprintf("Downloading \"%s\"...", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
           file_put_contents($filename, file_get_contents($gameClipUri->uri));
+          echo "done\n";
         }
         else {
-          echo $clip->gameClipId . " already exists\n";
+          echo sprintf("\"%s\" already exists\n", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
         }
       }
 
