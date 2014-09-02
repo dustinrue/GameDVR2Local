@@ -1,8 +1,9 @@
 #!/usr/bin/php
 <?php
+  date_default_timezone_set('Etc/GMT');
   $shortopts = "";
   $shortopts .= "x:";
-  $shortopts .= "u:";
+  $shortopts .= "u::";
   $shortopts .= "d:";
   
   $options = getopt($shortopts);
@@ -10,25 +11,28 @@
   if (count($options) == 0) {
     echo "Usage: " . $argv[0] . " <options>\n\n";
     echo "  -x       Your XboxAPI API Key\n";
-    echo "  -u       Your Xbox Profile User ID\n";
+    echo "  -u       Xbox Profile User ID to grab clips for, defaults to you\n";
     echo "  -d       File save location\n";
     exit;
   }
   
   $base_uri = "https://xboxapi.com/v2/%s/game-clips";
-
+  
+  
   $xauth  = $options['x'];
-  $xuid   = $options['u'];
+  
+  if (array_key_exists('u', $options)) {
+    $xuid   = $options['u'];   
+  }
+  else {
+    $url = "https://xboxapi.com/v2/accountXuid";
+    $xuid_response = do_request($url, $xauth);
+    $xuid = json_decode($xuid_response)->xuid;
+  }
+ 
   $output = $options['d'];
   
-  $ch = curl_init(sprintf($base_uri, $xuid));
-  
-  curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-AUTH: " . $xauth));
-  curl_setopt($ch, CURLOPT_HEADER, 0);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  $gameclip_metadata = curl_exec($ch);
-  curl_close($ch);
-
+  $gameclip_metadata = do_request(sprintf($base_uri, $xuid), $xauth);
   $gameclip_metadata_decoded = json_decode($gameclip_metadata);
 
   foreach($gameclip_metadata_decoded AS $game_clip) {
@@ -37,35 +41,50 @@
         
         // creates the destination directory while ignoring any errors 
         // (maybe the destination already exists)
-        @mkdir($output . "/" . $game_clip->titleName,0755,true);
+        @mkdir($output . DIRECTORY_SEPARATOR . $game_clip->titleName,0755,true);
         
-        if (!file_exists($output . "/" . $game_clip->titleName)) {
-          echo "Failed to create destination directory: " . $output . "/" . $game_clip->titleName . "\n";
+        if (!file_exists($output . DIRECTORY_SEPARATOR . $game_clip->titleName)) {
+          echo "Failed to create destination directory: " . $output . DIRECTORY_SEPARATOR . $game_clip->titleName . "\n";
           exit;
         }
         
-        // generate a clip name that includes the last modified date and, if set, the user caption
-        // (the title given when using Upload Studio) or simply the game clip id if it's directly
-        // from the game
-        if ($game_clip->userCaption != "") {
-          $filename = $output . "/" . $game_clip->titleName . "/[" . $game_clip->lastModified . "] " . $game_clip->userCaption . ".mp4";
-        }
-        else {
-          $filename = $output . "/" . $game_clip->titleName . "/[" . $game_clip->lastModified . "] " . $game_clip->gameClipId  . ".mp4";
-        }
+        $filename = generate_filename($output, $game_clip);
         
         // if the destination file already exists just skip it
         if (!file_exists($filename)) {
           echo sprintf("Downloading \"%s\"...", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
           file_put_contents($filename, file_get_contents($gameClipUri->uri));
+          touch($filename, strtotime($game_clip->dateRecorded));
           echo "done\n";
         }
         else {
-          echo sprintf("\"%s\" already exists\n", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
+          touch($filename, strtotime($game_clip->dateRecorded));
+          //echo sprintf("\"%s\" already exists\n", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
         }
       }
 
     }
 
+  }
+  function generate_filename($output_dir, $game_clip) {
+    if ($game_clip->userCaption != "") {
+      $filename = $output_dir . DIRECTORY_SEPARATOR . $game_clip->titleName . DIRECTORY_SEPARATOR . $game_clip->userCaption . " (" . $game_clip->gameClipId . ")" . ".mp4";
+    }
+    else {
+      $filename = $output_dir . DIRECTORY_SEPARATOR . $game_clip->titleName . DIRECTORY_SEPARATOR . $game_clip->gameClipId  . ".mp4";
+    }
+    
+    return $filename;
+  }
+  
+  function do_request($url, $xauth) {
+    $ch = curl_init($url);
+  
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-AUTH: " . $xauth));
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    return $response;
   }
 ?>
