@@ -11,7 +11,7 @@
   if (count($options) == 0) {
     echo "Usage: " . $argv[0] . " <options>\n\n";
     echo "  -x       Your XboxAPI API Key\n";
-    echo "  -u       Xbox Profile User ID to grab clips for, defaults to you\n";
+    echo "  -u       Xbox Gamertag to grab clips for, defaults to you\n";
     echo "  -d       File save location\n";
     exit;
   }
@@ -22,7 +22,14 @@
   $xauth  = $options['x'];
   
   if (array_key_exists('u', $options)) {
-    $xuid   = $options['u'];   
+    if ($options['u'] == '') {
+      echo "You can't leave a space behind -u because PHP is stupid\n";
+      exit;
+    }
+    $gt   = $options['u'];   
+    $url = sprintf("https://xboxapi.com/v2/xuid/%s", $gt);
+    $xuid_response = do_request($url, $xauth);
+    $xuid = $xuid_response;
   }
   else {
     $url = "https://xboxapi.com/v2/accountXuid";

@@ -15,6 +15,6 @@ Two requirements right now:
 Usage: ./get_game_clips.php <options>
 
   -x       Your XboxAPI API Key
-  -u       Your Xbox Profile User ID
+  -u       Gamertag to fetch videos for (Optional, do not provide to fetch your own)
   -d       File save location
 ```
