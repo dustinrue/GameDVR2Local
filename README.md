@@ -32,5 +32,11 @@ Show what games are available for a user
 Download specific game clips for a specific user
 
 ```
-./get_game_clips.php -x<your xbox api key> -g"Game Title" -uRealAngryMonkey
+./get_game_clips.php -x<your xbox api key> -g"Game Title" -uRealAngryMonkey -d<directory to save files to>
+```
+
+Download all of your own game clips
+
+```
+./get_game_clips.php -x<your xbox api key> -d<directory to save files to>
 ```
