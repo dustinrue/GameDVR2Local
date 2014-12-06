@@ -17,4 +17,20 @@ Usage: ./get_game_clips.php <options>
   -x       Your XboxAPI API Key
   -u       Gamertag to fetch videos for (Optional, do not provide to fetch your own)
   -d       File save location
+  -l       List games clips are available for
+  -g       Game to grab clips for. All are grabbed by default.
+```
+
+**Examples**
+
+Show what games are available for a user
+
+```
+./get_game_clips.php -x<your xbox api key> -l -uRealAngryMonkey
+```
+
+Download specific game clips for a specific user
+
+```
+./get_game_clips.php -x<your xbox api key> -g"Game Title" -uRealAngryMonkey
 ```
