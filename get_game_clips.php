@@ -61,7 +61,7 @@
   }
   
   foreach($gameclip_metadata_decoded AS $game_clip) {
-    if ($game && $game_clip->titleName != $game)
+    if (isset($game) && $game_clip->titleName != $game)
       continue;
     
     foreach ($game_clip->gameClipUris AS $gameClipUri) {
@@ -81,7 +81,8 @@
         // if the destination file already exists just skip it
         if (!file_exists($filename)) {
           printf("Downloading \"%s\"...", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
-          file_put_contents($filename, file_get_contents($gameClipUri->uri));
+          //file_put_contents($filename, file_get_contents($gameClipUri->uri));
+          download($filename, $gameClipUri->uri);
           touch($filename, strtotime($game_clip->dateRecorded));
           echo "done\n";
         }
@@ -126,4 +127,18 @@
     }
   
   }
+  
+  function download($filename, $download_url) {
+    $source_file = fopen($download_url, 'r');
+    $output_file = fopen($filename, 'w');
+    
+    while (($content = fgets($source_file)) !== false) {
+      fputs($output_file, $content);
+    }
+    
+    fclose($source_file);
+    fclose($output_file);
+    
+  }
+    
 ?>
