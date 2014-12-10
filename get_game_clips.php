@@ -96,6 +96,10 @@
 
   }
   function generate_filename($output_dir, $game_clip) {
+    if ($game_clip->titleName == "") {
+      printf("Game clip titles are coming back empty, bailing out\n");
+      exit;
+    }
     if ($game_clip->userCaption != "") {
       $filename = $output_dir . DIRECTORY_SEPARATOR . $game_clip->titleName . DIRECTORY_SEPARATOR . $game_clip->userCaption . " (" . $game_clip->gameClipId . ")" . ".mp4";
     }
