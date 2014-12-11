@@ -9,6 +9,7 @@
   $shortopts .= "d:";
   $shortopts .= "l::";
   $shortopts .= "g::";
+  $shortopts .= "o::";
   
   $options = getopt($shortopts);
   
@@ -19,6 +20,7 @@
     printf("  -d       File save location\n");
     printf("  -l       List games clips are available for\n");
     printf("  -g       Game to grab clips for. All are grabbed by default.\n");
+    printf("  -o       Output file to save newly downloaded vids on this run.\n");
     exit;
   }
   
@@ -46,10 +48,21 @@
   if (array_key_exists('d', $options)) {
     $output = $options['d'];
   }
-  
-  
+ 
   if (array_key_exists('g', $options)) {
     $game = $options['g'];
+  }
+  
+  if (array_key_exists('o', $options)) {
+    if ($options['o'] == '') {
+      printf("You can't leave a space behind -o because PHP is stupid\n");
+      exit;
+    }
+    $new_video_output_file = $options['o'];
+    $new_video_output_file = fopen($new_video_output_file, 'w');
+  }
+  else {
+    $new_video_output_file = false;
   }
   
   $gameclip_metadata = do_request(sprintf($base_uri, $xuid), $xauth);
@@ -83,6 +96,9 @@
           printf("Downloading \"%s\"...", ($game_clip->userCaption != "") ? $game_clip->userCaption:$game_clip->gameClipId);
           //file_put_contents($filename, file_get_contents($gameClipUri->uri));
           download($filename, $gameClipUri->uri);
+          if ($new_video_output_file) {
+            fputs($new_video_output_file, sprintf("%s\n",$filename));
+          }
           touch($filename, strtotime($game_clip->dateRecorded));
           echo "done\n";
         }
@@ -94,7 +110,13 @@
 
     }
 
+    
   }
+  if ($new_video_output_file) {
+    fclose($new_video_output_file);
+  }
+    
+    
   function generate_filename($output_dir, $game_clip) {
     if ($game_clip->titleName == "") {
       printf("Game clip titles are coming back empty, bailing out\n");
