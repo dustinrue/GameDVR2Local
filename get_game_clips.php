@@ -33,26 +33,27 @@
       printf("You can't leave a space behind -u because PHP is stupid\n");
       exit;
     }
-    $gts   = $options['u'];
+    $gts = $options['u'];
     $gta = explode(',',$gts);
-    $xuids = [];
     foreach ($gta as $gt) {
       $url = sprintf("https://xboxapi.com/v2/xuid/%s", $gt);
       $xuid_response = do_request($url, $xauth);
-      $xuids[] = $xuid_response;
+      $xuids[$gt] = $xuid_response;
     }
   }
   else {
     $url = "https://xboxapi.com/v2/accountXuid";
     $xuid_response = do_request($url, $xauth);
     $xuids[] = json_decode($xuid_response)->xuid;
+    $nogt = TRUE;
   }
 
   if (array_key_exists('d', $options)) {
     $output = $options['d'];
+  } else {
+    $output = getcwd();
   }
 
-  $games = [];
   if (array_key_exists('g', $options)) {
     $games = explode(',',$options['g']);
   }
@@ -71,9 +72,9 @@
 
   $gameclip_metadatas_decoded = [];
 
-  foreach ($xuids as $xuid) {
+  foreach ($xuids as $gt => $xuid) {
     $gameclip_metadata = do_request(sprintf($base_uri, $xuid), $xauth);
-    $gameclip_metadatas_decoded[] = json_decode($gameclip_metadata);
+    $gameclip_metadatas_decoded[$gt] = json_decode($gameclip_metadata);
   }
 
   if (array_key_exists('l', $options)) {
@@ -83,7 +84,13 @@
     exit;
   }
 
-  foreach($gameclip_metadatas_decoded as $gameclip_metadata_decoded) {
+  foreach($gameclip_metadatas_decoded as $gt => $gameclip_metadata_decoded) {
+    if ($nogt) {
+      $outputgt = $output;
+    } else {
+      $outputgt = $output . DIRECTORY_SEPARATOR . $gt;
+    }
+
     foreach($gameclip_metadata_decoded AS $game_clip) {
       if (isset($games) && !in_array($game_clip->titleName, $games))
       continue;
@@ -93,14 +100,14 @@
 
           // creates the destination directory while ignoring any errors
           // (maybe the destination already exists)
-          @mkdir($output . DIRECTORY_SEPARATOR . $game_clip->titleName,0755,true);
+          @mkdir($outputgt . DIRECTORY_SEPARATOR . $game_clip->titleName,0755,true);
 
-          if (!file_exists($output . DIRECTORY_SEPARATOR . $game_clip->titleName)) {
-            printf("Failed to create destination directory: %s%s%s\n", $output, DIRECTORY_SEPARATOR, $game_clip->titleName);
+          if (!file_exists($outputgt . DIRECTORY_SEPARATOR . $game_clip->titleName)) {
+            printf("Failed to create destination directory: %s%s%s\n", $outputgt, DIRECTORY_SEPARATOR, $game_clip->titleName);
             exit;
           }
 
-          $filename = generate_filename($output, $game_clip);
+          $filename = generate_filename($outputgt, $game_clip);
 
           // if the destination file already exists just skip it
           if (!file_exists($filename)) {
