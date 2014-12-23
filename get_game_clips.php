@@ -70,8 +70,6 @@
     $new_video_output_file = false;
   }
 
-  $gameclip_metadatas_decoded = [];
-
   foreach ($xuids as $gt => $xuid) {
     $gameclip_metadata = do_request(sprintf($base_uri, $xuid), $xauth);
     $gameclip_metadatas_decoded[$gt] = json_decode($gameclip_metadata);
