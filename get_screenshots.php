@@ -4,7 +4,7 @@
   define("BASE_URI", "https://xboxapi.com/v2");
   
   $our_dir = dirname(__FILE__);
-  require_once($our_dir . DIRECTORY_SEPARATOR . "GameClip.php");
+  require_once($our_dir . DIRECTORY_SEPARATOR . "Screenshot.php");
   
   date_default_timezone_set('Etc/GMT');
   
@@ -100,17 +100,18 @@
   // what is available for them or download them
 
   foreach ($xuids AS $xuid) {
-    $gameclip_metadata = do_request(sprintf(BASE_URI . "/%s/game-clips", $xuid['xuid']));
+    $gameclip_metadata = do_request(sprintf(BASE_URI . "/%s/screenshots", $xuid['xuid']));
 
     foreach($gameclip_metadata AS $gameclip) {
-      $clip_object = new GameClip($gameclip,$output);
+      $clip_object = new Screenshot($gameclip,$output);
       $clip_object->gt = $xuid['gamertag'];
       $clip_object->download();
     }
     
   }
 
-  
+
+
 
   /**
    * 
@@ -119,6 +120,7 @@
    * @throws Exception
    */
   function do_request($url) {
+    echo $url . "\n";
     $ch = curl_init($url);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-AUTH: " . APIKEY));
