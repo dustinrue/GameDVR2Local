@@ -5,7 +5,11 @@
   
   $our_dir = dirname(__FILE__);
   require_once($our_dir . DIRECTORY_SEPARATOR . "Screenshot.php");
+  require_once($our_dir . DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR . "autoload.php");
   
+  $thing = XboxLiveUser::withCachedCredentials("thing", "derp");
+  print_r($thing);
+  exit;
   date_default_timezone_set('Etc/GMT');
   
   $shortopts = "";
@@ -25,7 +29,7 @@
     printf("  -d       File save location\n");
     printf("  -l       List games clips are available for\n");
     printf("  -g       Game to grab clips for. All are grabbed by default.\n");
-    printf("  -o       If passed any files downloaded will be output to <gamertag>.txt");
+    printf("  -o       If passed any files downloaded will be output to <gamertag>.txt\n");
     exit;
   }
 

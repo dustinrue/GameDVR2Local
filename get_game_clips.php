@@ -2,9 +2,17 @@
 <?php
 
   define("BASE_URI", "https://xboxapi.com/v2");
+  define("AUTHCACHE", "/tmp/auth_info");
+  define("XUIDCACHE", "/tmp/xuid");
+  define("EXPIRES", "/tmp/session_expires");
   
   $our_dir = dirname(__FILE__);
   require_once($our_dir . DIRECTORY_SEPARATOR . "GameClip.php");
+  require_once($our_dir . DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR . "dustinrue" . DIRECTORY_SEPARATOR . "php-xboxliveclient" . DIRECTORY_SEPARATOR . "XboxLiveUser.php");
+  
+  $xuid = file_get_contents(XUIDCACHE);
+  $auth = file_get_contents(AUTHCACHE);
+  $live = XboxLiveUser::withCachedCredentials($xuid, $auth);
   
   date_default_timezone_set('Etc/GMT');
   
@@ -30,16 +38,7 @@
   }
 
   $show_available_games = false;
-  $output_work_done = false;
-
-  if (array_key_exists('x', $options)) {
-    define("APIKEY", $options['x']);
-  }
-  else {
-    printf("I need your xboxapi.com API key\n");
-    exit;
-  }
-  
+  $output_work_done = false;  
 
   if (array_key_exists('u', $options)) {
     if ($options['u'] == '') {
@@ -50,7 +49,7 @@
     $gta = explode(',',$gts);
     foreach ($gta as $gt) {
       try {
-        $data = get_data_for_gamertag($gt);
+        $data = $live->fetchXuidForGamertag($gt);
       }
       catch(Exception $e) {
         echo $e->getMessage();
@@ -65,15 +64,17 @@
   }
   else {
     try {
-      $data = get_data_for_gamertag();
+      $data = $live->fetchGamertagForXuid();
     }
     catch(Exception $e) {
       echo $e->getMessage();
       exit;
     }
+    
+
     $xuids[] = array(
-      'gamertag' => $data->gamertag,
-      'xuid' => $data->xuid,
+      'gamertag' => $data,
+      'xuid' => $live->xuid,
     );
   }
 
@@ -100,9 +101,11 @@
   // what is available for them or download them
 
   foreach ($xuids AS $xuid) {
-    $gameclip_metadata = do_request(sprintf(BASE_URI . "/%s/game-clips", $xuid['xuid']));
-
-    foreach($gameclip_metadata AS $gameclip) {
+    $live->xuid = $xuid['xuid'];
+    $params = array();
+    $gameclip_metadata = json_decode($live->fetchGameDVRClips($params));
+    
+    foreach($gameclip_metadata->gameClips AS $gameclip) {
       $clip_object = new GameClip($gameclip,$output);
       $clip_object->gt = $xuid['gamertag'];
       $clip_object->download();

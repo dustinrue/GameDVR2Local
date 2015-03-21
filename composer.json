@@ -1,0 +1,11 @@
+{
+"repositories": [
+        {
+            "url": "git@bitbucket.org:dustinrue/php-xboxliveclient.git",
+            "type": "git"
+        }
+    ],
+    "require": {
+        "dustinrue/php-xboxliveclient": "dev-master"
+    }
+}    
