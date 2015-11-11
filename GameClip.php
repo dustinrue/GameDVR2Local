@@ -4,6 +4,7 @@ Class GameClip {
   var $output_filename;
   var $clip_data;
   var $gt;
+  var $files_written;
   
   public function GameClip($clip_data = null, $output_filename = null) {
     $this->clip_data = $clip_data;
@@ -18,6 +19,7 @@ Class GameClip {
     }
 
     $game_clip_uris = $this->clip_data->gameClipUris;
+    $this->files_written = array();
     foreach ($game_clip_uris AS $game_clip_uri) {
       
         if ($game_clip_uri->uriType == "Download") {
@@ -52,6 +54,7 @@ Class GameClip {
             fclose($source_file);
             fclose($output_file);
             touch($filename, strtotime($this->clip_data->dateRecorded));
+            $this->files_written[] = $filename;
             echo "done\n";
           }
           else {

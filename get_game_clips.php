@@ -8,11 +8,11 @@
   
   $our_dir = dirname(__FILE__);
   require_once($our_dir . DIRECTORY_SEPARATOR . "GameClip.php");
-  require_once($our_dir . DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR . "dustinrue" . DIRECTORY_SEPARATOR . "php-xboxliveclient" . DIRECTORY_SEPARATOR . "XboxLiveUser.php");
+  require_once($our_dir . DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR . "dustinrue" . DIRECTORY_SEPARATOR . "php-xboxliveclient" . DIRECTORY_SEPARATOR . "XboxLiveClient.php");
   
   $xuid = file_get_contents(XUIDCACHE);
   $auth = file_get_contents(AUTHCACHE);
-  $live = XboxLiveUser::withCachedCredentials($xuid, $auth);
+  $live = XboxLiveClient::withCachedCredentials($xuid, $auth);
   
   date_default_timezone_set('Etc/GMT');
   
@@ -33,7 +33,8 @@
     printf("  -d       File save location\n");
     printf("  -l       List games clips are available for\n");
     printf("  -g       Game to grab clips for. All are grabbed by default.\n");
-    printf("  -o       If passed any files downloaded will be output to <gamertag>.txt");
+    printf("  -o       If passed any files downloaded will be output provided filename\n");
+    printf("\n");
     exit;
   }
 
@@ -94,6 +95,7 @@
       exit;
     }
     $output_work_done = true;
+    $output_work_done_file = $options['o'];
   }
   
   
@@ -110,7 +112,12 @@
       $clip_object->gt = $xuid['gamertag'];
       $clip_object->download();
     }
-    
+    if ($output_work_done) {
+      foreach($clip_object->files_written AS $file) {
+        printf("Outputting %s to file %s\n", $file, $output_work_done_file);
+        file_put_contents($output_work_done_file, sprintf("%s\n", $file), FILE_APPEND);
+      }
+    }
   }
 
   
